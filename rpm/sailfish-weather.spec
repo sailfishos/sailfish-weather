@@ -21,9 +21,7 @@ BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
 
-BuildRequires: %{name}-all-translations
-%define _all_translations_version %(rpm -q --queryformat "%%{version}-%%{release}" %{name}-all-translations)
-Requires: %{name}-all-translations >= %{_all_translations_version}
+Requires: %{name}-all-translations
 
 Requires: sailfishsilica-qt5 >= 0.27.0
 Requires: mapplauncherd-booster-silica-qt5
