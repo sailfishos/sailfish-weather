@@ -270,12 +270,16 @@ ListItem {
                             active: weatherBanner.active && weatherBanner.hourly
                             weather: weatherBanner.weather
                             timestamp: weatherModel.timestamp
-                            onStatusChanged: if (status === Weather.Ready) temperatureGraph.update()
+                            onStatusChanged: {
+                                if (status === Weather.Ready)
+                                    temperatureGraph.update()
+                            }
                         }
 
                         delegate: Item {
                             width: hourlyForecastList.itemWidth
                             height: hourlyForecastList.height
+
                             HourlyForecastItem {
                                 hourMode: hourlyForecastList.hourMode
                                 highlighted: weatherBanner.highlighted
