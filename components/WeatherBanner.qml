@@ -249,7 +249,17 @@ ListItem {
                                     var array = []
                                     var model = hourlyForecastList.model
 
-                                    array[0] = 2 * model.get(0).relativeTemperature - model.get(1).relativeTemperature
+                                    // the first model temperature should be horizontally centered to the first
+                                    // HourlyForecastItem (could be better aligned here) which means that the
+                                    // first and last line graph values need some special interpolation or handling
+                                    // as they are before and after the forecast time values
+                                    // TODO: maybe just move the whole normalization here and
+                                    /// take into account the calculated values
+                                    array[0] = Math.min(1,
+                                                        Math.max(0,
+                                                                 2 * model.get(0).relativeTemperature
+                                                                 - model.get(1).relativeTemperature))
+
                                     for (var i = 0; i < model.visibleCount; i++) {
                                         array[i + 1] = model.get(i).relativeTemperature
                                     }
@@ -270,12 +280,16 @@ ListItem {
                             active: weatherBanner.active && weatherBanner.hourly
                             weather: weatherBanner.weather
                             timestamp: weatherModel.timestamp
-                            onStatusChanged: if (status === Weather.Ready) temperatureGraph.update()
+                            onStatusChanged: {
+                                if (status === Weather.Ready)
+                                    temperatureGraph.update()
+                            }
                         }
 
                         delegate: Item {
                             width: hourlyForecastList.itemWidth
                             height: hourlyForecastList.height
+
                             HourlyForecastItem {
                                 hourMode: hourlyForecastList.hourMode
                                 highlighted: weatherBanner.highlighted

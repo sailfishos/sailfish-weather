@@ -19,8 +19,10 @@ Column {
         width: temperatureLabel.width
         height: temperatureGraph.height + temperatureLabel.height + padding
         anchors.horizontalCenter: parent.horizontalCenter
+
         Label {
             id: temperatureLabel
+
             text: TemperatureConverter.format(model.temperature)
             y: (1 - model.relativeTemperature) * temperatureGraph.height - parent.padding
         }
