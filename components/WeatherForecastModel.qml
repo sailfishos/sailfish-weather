@@ -17,7 +17,7 @@ ListModel {
     property alias status: request.status
     property int visibleCount: 6
     property int minimumHourlyRange: 4
-    readonly property bool loading: forecastModel.status == Weather.Loading
+    readonly property bool loading: forecastModel && forecastModel.status == Weather.Loading
     readonly property int locationId: weather ? weather.locationId : -1
 
     onLocationIdChanged: {

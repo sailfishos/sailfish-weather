@@ -18,6 +18,7 @@ ListItem {
     property alias active: weatherModel.active
     property bool hourly: forecastMode.value === "hourly"
     property bool expanded: true
+    property bool showExpand: true
     readonly property QtObject forecastModel: hourly ? (hourlyForecastLoader.item ? hourlyForecastLoader.item.model : null)
                                                      : (dailyForecastLoader.item ? dailyForecastLoader.item.model : null)
     readonly property bool loading: forecastModel && forecastModel.status === Weather.Loading
@@ -26,6 +27,8 @@ ListItem {
     readonly property bool _unauthorized: forecastModel && forecastModel.status === Weather.Unauthorized
     readonly property int _forecastCount: forecastModel ? forecastModel.count : 0
     readonly property string _providerImage: WeatherProvider.smallProviderImage()
+
+    signal expansionRequested(bool expand)
 
     _backgroundColor: "transparent"
     onActiveChanged: if (!active) save()
@@ -42,7 +45,7 @@ ListItem {
 
     onClicked: {
         if (!expanded) {
-            expanded = true
+            expansionRequested(true)
         } else if (!_error && !_unauthorized) {
             hourly = !hourly
         }
@@ -59,6 +62,10 @@ ListItem {
 
     menu: Component {
         ContextMenu {
+            // cope with being half a screen in landscape
+            width: parent ? parent.width : 0
+            x: 0
+
             MenuLabel {
                 //% "Updated %1"
                 text: forecastModel ? qsTrId("weather-la-updated_time").arg(
@@ -156,21 +163,24 @@ ListItem {
             IconButton {
                 id: expandButton
 
+                visible: weatherBanner.showExpand
                 height: Math.max(parent.height, Theme.itemSizeSmall)
                 width: icon.width + 2*Theme.paddingLarge
-                onClicked: expanded = !expanded
                 icon {
                     transformOrigin: Item.Center
                     source: "image://theme/icon-s-arrow"
                     rotation: expanded ? 180 : 0
                 }
                 Behavior on icon.rotation { RotationAnimator { duration: 200 }}
+
+                onClicked: weatherBanner.expansionRequested(!expanded)
             }
         }
         Column {
             width: parent.width
             height: expanded ? implicitHeight : 0
             opacity: expanded ? 1.0 : 0.0
+
             Behavior on opacity { FadeAnimator {} }
             Behavior on height {
                 NumberAnimation {
@@ -182,6 +192,7 @@ ListItem {
             Item {
                 width: parent.width
                 height: Math.max(hourlyForecastLoader.height, dailyForecastLoader.height)
+
                 Loader {
                     id: dailyForecastLoader
 

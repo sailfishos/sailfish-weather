@@ -15,7 +15,7 @@ SilicaListView {
 
     opacity: active ? 1.0 : 0.0
     Behavior on opacity { FadeAnimator {}}
-    width: parent.width
+    width: parent ? parent.width : 0
     implicitHeight: 2 * (Screen.sizeCategory >= Screen.Large ? Theme.itemSizeExtraLarge : Theme.itemSizeLarge)
     height: Math.max(itemHeight, implicitHeight)
 
