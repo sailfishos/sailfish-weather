@@ -142,7 +142,8 @@ QtObject {
                 return container
             }
 
-            var dayKey = entry.time.substring(0, 10)
+            // Convert UTC to date in local time zone
+            var dayKey = Qt.formatDate(new Date(entry.time), Qt.ISODate)
             if (!container[dayKey]) {
                 container[dayKey] = []
             }
@@ -413,6 +414,8 @@ QtObject {
     }
 
     function hourOfDay(timestamp) {
-        return parseInt(timestamp.substring(11, 13), 10)
+        // Return the hour in local time zone
+        var d = new Date(timestamp)
+        return d.getHours()
     }
 }
