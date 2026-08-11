@@ -8,8 +8,6 @@ import Sailfish.Silica 1.0
 import Sailfish.Weather 1.0
 
 Item {
-    readonly property string _providerImage: WeatherProvider.smallProviderImage()
-
     WeatherCoverItem {
         x: Theme.paddingLarge
         width: parent.width - 2*x
@@ -51,18 +49,5 @@ Item {
             centerIn: parent
             verticalCenterOffset: Theme.paddingSmall
         }
-    }
-    Image {
-        scale: 0.5
-        opacity: 0.5
-        anchors {
-            bottom: parent.bottom
-            // Keep clear of the bottom action icon without floating the provider badge too high.
-            bottomMargin: Math.round(Theme.itemSizeSmall / 2)
-            horizontalCenter: parent.horizontalCenter
-        }
-        source: _providerImage.length > 0
-                ? _providerImage + (highlighted ? Theme.highlightColor : Theme.primaryColor)
-                : ""
     }
 }
