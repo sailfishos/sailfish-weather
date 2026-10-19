@@ -192,7 +192,7 @@ Item {
             WeatherDetailItem {
                 //% "Cloudiness"
                 label: qsTrId("weather-la-cloudiness")
-                value: model ? model.cloudiness + Qt.locale().percent : ""
+                value: model ? Math.round(model.cloudiness) + Qt.locale().percent : ""
             }
             WeatherDetailItem {
                 //% "Precipitation rate"
