@@ -357,8 +357,9 @@ QtObject {
                     break
                 }
             }
-            weather['precipitationType'] = precipitationType
-            weather['precipitationRate'] = precipitationRate
+            // Backend descriptions can retain detail lost in the shared icon codes.
+            weather['precipitationType'] = weather.precipitationType || precipitationType
+            weather['precipitationRate'] = weather.precipitationRate || precipitationRate
         }
 
         return res

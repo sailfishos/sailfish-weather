@@ -180,7 +180,7 @@ QtObject {
                 }
             }
 
-            var dailyWeather = getWeatherData(representative, false)
+            var dailyWeather = getDailyWeatherData(entries, representative)
             var selectedDetails = representative.data.instant.details
             dailyWeather.timestamp = new Date(representative.time)
             dailyWeather.accumulatedPrecipitation = accumulatedPrecipitation
@@ -192,6 +192,158 @@ QtObject {
         }
 
         return weatherData
+    }
+
+    function getDailyWeatherData(entries, representative) {
+        var weather = getWeatherData(representative, false)
+        var wettestSymbol = ""
+        var highestSeverity = 0
+        var highestRate = -1
+        var cloudSum = 0
+        var cloudHours = 0
+
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i]
+            var data = entry.data
+            // Use disjoint periods: longer summaries overlap the shorter ones.
+            var hours = data.next_1_hours ? 1 : data.next_6_hours ? 6 : data.next_12_hours ? 12 : 0
+            if (hours === 0) {
+                continue
+            }
+            var period = data["next_" + hours + "_hours"]
+            var symbol = period.summary ? period.summary.symbol_code || "" : ""
+            var severity = precipitationSeverity(symbol)
+            var amount = period.details ? period.details.precipitation_amount : undefined
+            var rate = amount !== undefined ? amount / hours : 0
+            if (severity > highestSeverity
+                    || (severity > 0 && severity === highestSeverity && rate > highestRate)) {
+                wettestSymbol = symbol
+                highestSeverity = severity
+                highestRate = rate
+            }
+
+            var cloudiness = data.instant.details.cloud_area_fraction
+            if (cloudiness !== undefined && cloudiness !== null) {
+                var start = new Date(entry.time)
+                var dayEnd = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
+                var duration = Math.min(hours, (dayEnd - start) / (60 * 60 * 1000))
+                cloudSum += cloudiness * duration
+                cloudHours += duration
+            }
+        }
+
+        if (cloudHours > 0) {
+            weather.cloudiness = Math.round(cloudSum / cloudHours)
+        }
+        if (wettestSymbol.length > 0) {
+            // A daily symbol uses day artwork even when the downpour is at night.
+            weather.weatherType = "d" + weatherTypeFromMetSymbol(wettestSymbol)
+            weather.precipitationRate = precipitationDescription(wettestSymbol)
+            weather.precipitationType = precipitationType(wettestSymbol)
+        } else if (cloudHours > 0 && baseSymbolCode(summarySymbolCode(representative.data)) !== "fog") {
+            weather.weatherType = "d" + cloudinessCode(weather.cloudiness)
+        }
+        weather.description = WeatherTypeDescriptions.description(weather.weatherType) || weather.description
+        return weather
+    }
+
+    function precipitationDescription(symbolCode) {
+        var code = baseSymbolCode(symbolCode).replace("andthunder", "")
+                .replace("lightssleet", "lightsleet").replace("lightssnow", "lightsnow")
+        var descriptions = {
+            //% "Light rain"
+            "lightrain": qsTrId("weather-la-description-light_rain"),
+            //% "Rain"
+            "rain": qsTrId("weather-la-precipitationtype_rain"),
+            //% "Heavy rain"
+            "heavyrain": qsTrId("weather-la-precipitation_heavy_rain"),
+            //% "Light sleet"
+            "lightsleet": qsTrId("weather-la-precipitation_light_sleet"),
+            //% "Sleet"
+            "sleet": qsTrId("weather-la-precipitationtype_sleet"),
+            //% "Heavy sleet"
+            "heavysleet": qsTrId("weather-la-precipitation_heavy_sleet"),
+            //% "Light snow"
+            "lightsnow": qsTrId("weather-la-description-light_snow"),
+            //% "Snow"
+            "snow": qsTrId("weather-la-precipitationtype_snow"),
+            //% "Heavy snow"
+            "heavysnow": qsTrId("weather-la-description-heavy_snow"),
+            //% "Light rain showers"
+            "lightrainshowers": qsTrId("weather-la-precipitation_light_rain_showers"),
+            //% "Rain showers"
+            "rainshowers": qsTrId("weather-la-precipitation_rain_showers"),
+            //% "Heavy rain showers"
+            "heavyrainshowers": qsTrId("weather-la-precipitation_heavy_rain_showers"),
+            //% "Light sleet showers"
+            "lightsleetshowers": qsTrId("weather-la-precipitation_light_sleet_showers"),
+            //% "Sleet showers"
+            "sleetshowers": qsTrId("weather-la-precipitation_sleet_showers"),
+            //% "Heavy sleet showers"
+            "heavysleetshowers": qsTrId("weather-la-precipitation_heavy_sleet_showers"),
+            //% "Light snow showers"
+            "lightsnowshowers": qsTrId("weather-la-precipitation_light_snow_showers"),
+            //% "Snow showers"
+            "snowshowers": qsTrId("weather-la-precipitation_snow_showers"),
+            //% "Heavy snow showers"
+            "heavysnowshowers": qsTrId("weather-la-precipitation_heavy_snow_showers"),
+            //% "Light drizzle"
+            "lightdrizzle": qsTrId("weather-la-precipitation_light_drizzle"),
+            //% "Drizzle"
+            "drizzle": qsTrId("weather-la-description-drizzle"),
+            //% "Heavy drizzle"
+            "heavydrizzle": qsTrId("weather-la-precipitation_heavy_drizzle")
+        }
+        return descriptions[code] || ""
+    }
+
+    function precipitationType(symbolCode) {
+        if (symbolCode.indexOf("sleet") >= 0) {
+            //% "Sleet"
+            return qsTrId("weather-la-precipitationtype_sleet")
+        }
+        if (symbolCode.indexOf("snow") >= 0) {
+            //% "Snow"
+            return qsTrId("weather-la-precipitationtype_snow")
+        }
+        //% "Rain"
+        return qsTrId("weather-la-precipitationtype_rain")
+    }
+
+    function precipitationSeverity(symbolCode) {
+        // Rank MET symbols before mapping to the less detailed Sailfish icons:
+        // heavy showers and ordinary showers share an icon, for example.
+        var type = weatherTypeFromMetSymbol(symbolCode)
+        if (type.charAt(1) === "0") {
+            return 0
+        }
+        if (symbolCode.indexOf("thunder") >= 0) {
+            return 4
+        }
+        if (symbolCode.indexOf("heavy") >= 0) {
+            return 3
+        }
+        if (symbolCode.indexOf("light") >= 0) {
+            return 1
+        }
+        return 2
+    }
+
+    function cloudinessCode(cloudiness) {
+        // Use the same cloud-cover bands as the Open-Meteo backend.
+        if (cloudiness < 20) {
+            return "000"
+        }
+        if (cloudiness < 45) {
+            return "100"
+        }
+        if (cloudiness < 75) {
+            return "200"
+        }
+        if (cloudiness < 95) {
+            return "300"
+        }
+        return "400"
     }
 
     function handleSearchLocationResult(result) {
