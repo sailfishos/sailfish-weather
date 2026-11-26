@@ -29,7 +29,9 @@ Item {
     onFlickableChanged: update()
 
     width: parent.width
-    height: mainLabel.height + Theme.paddingLarge + ((error || unauthorized) ? button.height : busyIndicator.height)
+    height: mainLabel.height + Theme.paddingLarge + ((error || unauthorized)
+                                                     ? button.height
+                                                     : busyIndicator.running ? busyIndicator.height : 0)
     opacity: enabled ? 1.0 : 0.0
     Behavior on opacity { OpacityAnimator { easing.type: Easing.InOutQuad;  duration: 400 } }
 
@@ -38,7 +40,6 @@ Item {
 
         wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
-
         text: {
             if (error) {
                 //% "Loading failed"
@@ -67,7 +68,8 @@ Item {
         id: busyIndicator
 
         running: parent.opacity > 0 && !error && !unauthorized && !empty
-        size: BusyIndicatorSize.Large
+        size: Screen.sizeCategory >= Screen.Medium ? BusyIndicatorSize.Large
+                                                   : BusyIndicatorSize.Medium
         anchors {
             top: mainLabel.bottom
             topMargin: Theme.paddingLarge

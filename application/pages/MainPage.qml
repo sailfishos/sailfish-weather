@@ -46,6 +46,7 @@ Page {
 
             WeatherHeader {
                 opacity: currentWeatherAvailable ? 1.0 : 0.0
+                visible: opacity > 0
                 weather: savedWeathersModel.currentWeather
                 onClicked: {
                     pageStack.animatorPush("WeatherPage.qml", {
@@ -111,7 +112,8 @@ Page {
             parent: weatherListView.contentItem
             y: weatherListView.originY
                + (currentWeatherAvailable ? Math.round(parent.height / 12) + weatherListView.headerItem.height
-                                          : Math.round(Screen.height / 4))
+                                          : Screen.sizeCategory >= Screen.Medium ? Math.round(Screen.height / 4)
+                                                                                 : Theme.itemSizeSmall)
             enabled: loadingCurrentWeather
                      || emptyState
                      || (currentWeatherAvailable && savedWeathersModel.count === 0 && counter.active)
@@ -187,7 +189,9 @@ Page {
             ListView.onAdd: AddAnimation { target: savedWeatherItem }
             ListView.onRemove: animateRemoval()
             menu: contextMenuComponent
-            contentHeight: visible ? Math.max(Theme.itemSizeMedium, labelColumn.implicitHeight + 2 * Theme.paddingMedium) : 0
+            contentHeight: visible ? Math.max(Theme.itemSizeMedium,
+                                              labelColumn.implicitHeight + 2 * Theme.paddingMedium)
+                                   : 0
             onClicked: {
                 pageStack.animatorPush("WeatherPage.qml", {
                     "weather": savedWeathersModel.get(model.locationId, model.provider),
@@ -262,6 +266,7 @@ Page {
                 width: visible ? implicitWidth : 0
                 visible: model.populated
             }
+
             Component {
                 id: contextMenuComponent
 
@@ -280,7 +285,6 @@ Page {
                                 var current = savedWeathersModel.currentWeather
                                 if (!current || current.locationId !== model.locationId) {
                                     savedWeathersModel.setCurrentWeather(WeatherProvider.locationMap(model))
-
                                 }
                                 setCurrentWhenClosed = false
                             }
@@ -316,7 +320,7 @@ Page {
             id: provider
 
             y: weatherListView.originY - weatherListView.contentY - height
-               + Math.max(Screen.height, weatherListView.contentHeight)
+               + Math.max(weatherListView.height, weatherListView.contentHeight)
             weather: savedWeathersModel.currentWeather
         }
         VerticalScrollDecorator {}
