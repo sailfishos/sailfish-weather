@@ -122,28 +122,41 @@ Page {
                 if (error) {
                     //% "Loading failed"
                     return qsTrId("weather-la-loading_failed")
-                } else if (unauthorized) {
+                }
+                if (unauthorized) {
                     //% "Invalid authentication credentials"
                     return qsTrId("weather-la-unauthorized")
-                } else if (empty) {
+                }
+
+                if (empty) {
                     if (noProviderSelected) {
                         //% "No weather provider selected. Open Settings to choose one."
                         return qsTrId("weather-la-no_weather_provider_selected")
-                    } else if (currentWeatherAvailable) {
-                        if (counter.active) {
-                            //% "Pull down to add another weather location"
-                            return qsTrId("weather-la-pull_down_to_add_another_location")
-                        } else {
-                            return ""
-                        }
-                    } else {
-                        //% "Pull down to select your location"
-                        return qsTrId("weather-la-pull_down_to_select_your_location")
                     }
-                } else {
-                    //% "Loading"
-                    return qsTrId("weather-la-loading")
+
+                    if (currentWeatherAvailable) {
+                        if (counter.active) {
+                            return SoftKeys.active
+                                    ? //: Access via softkey
+                                      //% "Press options to add another weather location"
+                                      qsTrId("weather-la-options_to_add_another_location")
+                                    : //% "Pull down to add another weather location"
+                                      qsTrId("weather-la-pull_down_to_add_another_location")
+                        }
+
+                        return ""
+                    }
+
+                    return SoftKeys.active
+                            ? //: Access via softkey
+                              //% "Press options to select your location"
+                              qsTrId("weather-la-options_to_select_your_location")
+                            : //% "Pull down to select your location"
+                              qsTrId("weather-la-pull_down_to_select_your_location")
                 }
+
+                //% "Loading"
+                return qsTrId("weather-la-loading")
             }
             onReload: {
                 if (savedWeathersModel.currentWeather) {
