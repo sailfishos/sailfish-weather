@@ -46,6 +46,7 @@ Page {
 
             WeatherHeader {
                 opacity: currentWeatherAvailable ? 1.0 : 0.0
+                visible: opacity > 0
                 weather: savedWeathersModel.currentWeather
                 onClicked: {
                     pageStack.animatorPush("WeatherPage.qml", {
@@ -111,7 +112,8 @@ Page {
             parent: weatherListView.contentItem
             y: weatherListView.originY
                + (currentWeatherAvailable ? Math.round(parent.height / 12) + weatherListView.headerItem.height
-                                          : Math.round(Screen.height / 4))
+                                          : Screen.sizeCategory >= Screen.Medium ? Math.round(Screen.height / 4)
+                                                                                 : Theme.itemSizeSmall)
             enabled: loadingCurrentWeather
                      || emptyState
                      || (currentWeatherAvailable && savedWeathersModel.count === 0 && counter.active)
@@ -122,28 +124,41 @@ Page {
                 if (error) {
                     //% "Loading failed"
                     return qsTrId("weather-la-loading_failed")
-                } else if (unauthorized) {
+                }
+                if (unauthorized) {
                     //% "Invalid authentication credentials"
                     return qsTrId("weather-la-unauthorized")
-                } else if (empty) {
+                }
+
+                if (empty) {
                     if (noProviderSelected) {
                         //% "No weather provider selected. Open Settings to choose one."
                         return qsTrId("weather-la-no_weather_provider_selected")
-                    } else if (currentWeatherAvailable) {
-                        if (counter.active) {
-                            //% "Pull down to add another weather location"
-                            return qsTrId("weather-la-pull_down_to_add_another_location")
-                        } else {
-                            return ""
-                        }
-                    } else {
-                        //% "Pull down to select your location"
-                        return qsTrId("weather-la-pull_down_to_select_your_location")
                     }
-                } else {
-                    //% "Loading"
-                    return qsTrId("weather-la-loading")
+
+                    if (currentWeatherAvailable) {
+                        if (counter.active) {
+                            return SoftKeys.active
+                                    ? //: Access via softkey
+                                      //% "Press options to add another weather location"
+                                      qsTrId("weather-la-options_to_add_another_location")
+                                    : //% "Pull down to add another weather location"
+                                      qsTrId("weather-la-pull_down_to_add_another_location")
+                        }
+
+                        return ""
+                    }
+
+                    return SoftKeys.active
+                            ? //: Access via softkey
+                              //% "Press options to select your location"
+                              qsTrId("weather-la-options_to_select_your_location")
+                            : //% "Pull down to select your location"
+                              qsTrId("weather-la-pull_down_to_select_your_location")
                 }
+
+                //% "Loading"
+                return qsTrId("weather-la-loading")
             }
             onReload: {
                 if (savedWeathersModel.currentWeather) {
@@ -174,7 +189,9 @@ Page {
             ListView.onAdd: AddAnimation { target: savedWeatherItem }
             ListView.onRemove: animateRemoval()
             menu: contextMenuComponent
-            contentHeight: visible ? Math.max(Theme.itemSizeMedium, labelColumn.implicitHeight + 2 * Theme.paddingMedium) : 0
+            contentHeight: visible ? Math.max(Theme.itemSizeMedium,
+                                              labelColumn.implicitHeight + 2 * Theme.paddingMedium)
+                                   : 0
             onClicked: {
                 pageStack.animatorPush("WeatherPage.qml", {
                     "weather": savedWeathersModel.get(model.locationId, model.provider),
@@ -249,6 +266,7 @@ Page {
                 width: visible ? implicitWidth : 0
                 visible: model.populated
             }
+
             Component {
                 id: contextMenuComponent
 
@@ -267,7 +285,6 @@ Page {
                                 var current = savedWeathersModel.currentWeather
                                 if (!current || current.locationId !== model.locationId) {
                                     savedWeathersModel.setCurrentWeather(WeatherProvider.locationMap(model))
-
                                 }
                                 setCurrentWhenClosed = false
                             }
@@ -303,7 +320,7 @@ Page {
             id: provider
 
             y: weatherListView.originY - weatherListView.contentY - height
-               + Math.max(Screen.height, weatherListView.contentHeight)
+               + Math.max(weatherListView.height, weatherListView.contentHeight)
             weather: savedWeathersModel.currentWeather
         }
         VerticalScrollDecorator {}
